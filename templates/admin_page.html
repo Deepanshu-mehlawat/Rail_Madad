@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rail Madad - Complaint Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_page.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Rail Madad</h1>
+            <nav>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#complaints">File Complaint</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+
+    <section id="complaints">
+        <div class="container">
+            <h3>Pending Approval</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Complaint_ID</th>
+                        <th>Grievance Type</th>
+                        <th>Subtype</th>
+                        <th>Department</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTable">
+                    <tr>
+			<td>C1</td>
+                        <td>Cleanliness</td>
+                        <td>Toilet</td>
+                        <td>Maintenance</td>
+                        <td>Toilet is not clean.</td>
+                        <td>
+                            <button class="approve-btn" type="submit" name="accept" value="accept">✔</button>
+                            <button class="disqualify-btn" type="submit" name="reject" value="reject">❌</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Active Complaints</h3>
+            <table>
+                <thead>
+                    <tr>
+			<th>Complaint_ID</th>
+                        <th>Grievance Type</th>
+                        <th>Subtype</th>
+                        <th>Department</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="activeTable">
+			<tr>
+			<td>C1</td>
+                        <td>Cleanliness</td>
+                        <td>Toilet</td>
+                        <td>Maintenance</td>
+                        <td>Toilet is not clean.</td>
+                        </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Rail Madad - All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>

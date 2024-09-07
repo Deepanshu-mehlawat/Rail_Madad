@@ -1,11 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_bcrypt import Bcrypt
+from dotenv import load_dotenv
 import pymongo
+import json
 from pymongo import MongoClient
+import prompts
+import os
+from PIL import Image
+#from IPython.display import Image
+#from IPython.core.display import HTML
+import google.generativeai as genai
 
 app = Flask(__name__)
 uri = "mongodb+srv://deepanshumehlawat2003:m7E9EiYSSDHhI3z9@sih.0oetq.mongodb.net/?retryWrites=true&w=majority&appName=sih"
 bcrypt = Bcrypt(app)
+load_dotenv()
+api_key = os.getenv('API_KEY')
+genai.configure(api_key=api_key)
 
 # Create a new client and connect to the server
 client = MongoClient(uri)
@@ -53,6 +64,57 @@ def register():
 def sih():
     # Add logic for authenticated users
     return render_template('sih.html')
+
+@app.route('/cat_img', methods=['POST'])
+def cat_img():
+    if 'image' not in request.files:
+        return jsonify({"type": "0"})  # No image received
+    
+    image_file = request.files['image']
+    
+    try:
+        image = Image.open(image_file)  # Open the uploaded image
+    except IOError:
+        return jsonify({"type": "0"})
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content([prompts.prompt1, image])
+
+    # Print response.text to debug
+    print('Response text from model:', response.text)
+    
+    try:
+        # Attempt to parse the response as JSON
+        response_json = json.loads(response.text)
+    except json.JSONDecodeError:
+        # If parsing fails, return a default error response
+        return jsonify({"type": "0"})
+    
+    # Return the parsed JSON response
+    return jsonify(response_json)
+
+@app.route('/cat_text',methods=['POST'])
+def cat_text():
+    if 'text' not in request.form:
+        return jsonify({"type": "0"})
+
+    text = request.form['text']
+    print(text)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompts.prompt2+text)
+
+    print('Response text from model:', response.text)
+    
+    try:
+        # Attempt to parse the response as JSON
+        response_json = json.loads(response.text)
+    except json.JSONDecodeError:
+        # If parsing fails, return a default error response
+        return jsonify({"type": "0"})
+    
+    # Return the parsed JSON response
+    return jsonify(response_json)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

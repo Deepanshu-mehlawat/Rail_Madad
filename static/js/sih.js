@@ -92,3 +92,220 @@ document.addEventListener('DOMContentLoaded', function() {
         */
     });
 });
+
+
+document.getElementById('categorizeBtn').addEventListener('click', function() {
+    const imageInput = document.getElementById('imageUpload');
+    const file = imageInput.files[0];
+
+    if (!file) {
+        alert('Please upload an image before categorizing.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    fetch('/cat_img', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid data received from the server.');
+        }
+
+        // Convert 'type' to string to ensure consistent comparison
+        const type = (data.type || '').toString().trim(); // Trim any extra whitespace
+        const subtype = (data.subtype || '').toString().trim(); // Trim any extra whitespace
+        const details = data.details || '';
+
+        if (type === '0') {
+            // Handle the case where no issue is found
+            alert('No context found, please enter details via mic or manually enter them.');
+
+            // Clear type and subtype fields
+            document.getElementById('type').value = '';
+            document.getElementById('subType').value = '';
+
+            // Clear details field
+            document.getElementById('message').value = '';
+
+        } else {
+            // Normal case where type is identified
+            const typeField = document.getElementById('type');
+            const subTypeField = document.getElementById('subType');
+            const messageField = document.getElementById('message');
+
+            if (typeField && subTypeField && messageField) {
+                // Find and set the type field value
+                let typeMatched = false;
+                [...typeField.options].forEach(option => {
+                    if (option.textContent.trim() === type) {
+                        typeField.value = option.value;
+                        typeMatched = true;
+                    }
+                });
+
+                if (!typeMatched) {
+                    console.warn('Type value not found:', type);
+                    return; // Exit early if type doesn't match
+                }
+
+                // Trigger the change event to populate the subType dropdown
+                const event = new Event('change');
+                typeField.dispatchEvent(event);
+
+                // Wait until subType is populated before setting it
+                setTimeout(function() {
+                    let subTypeMatched = false;
+                    [...subTypeField.options].forEach(option => {
+                        if (option.textContent.trim() === subtype) {
+                            subTypeField.value = option.value;
+                            subTypeMatched = true;
+                        }
+                    });
+
+                    if (!subTypeMatched) {
+                        console.warn('SubType value not found:', subtype);
+                    }
+
+                    // Set the details field
+                    messageField.value = details;
+
+                }, 500); // Adjust the delay if necessary
+
+            } else {
+                console.error('One or more form elements not found.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error categorizing the image.');
+    });
+});
+
+    window.onload = function() {
+        const incidentDateTimeField = document.getElementById('incidentDateTime');
+        const now = new Date();
+        const formattedDateTime = now.toISOString().slice(0, 16); // Get 'YYYY-MM-DDTHH:MM' format
+        incidentDateTimeField.value = formattedDateTime;
+    };
+
+const micIcon = document.getElementById('micIcon');
+const messageTextarea = document.getElementById('message');
+
+// Check if the browser supports Web Speech API
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    micIcon.addEventListener('click', () => {
+        if (micIcon.classList.contains('mic-active')) {
+            recognition.stop();
+        } else {
+            recognition.start();
+        }
+    });
+
+    recognition.onstart = function () {
+        micIcon.classList.add('mic-active');
+        micIcon.title = 'Listening... Click to stop';
+    };
+
+    recognition.onend = function () {
+        micIcon.classList.remove('mic-active');
+        micIcon.title = 'Click to start speech recognition';
+    };
+
+    recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        
+        // Instead of setting the text in the textarea, send it to /cat_text
+        sendTextForCategorization(transcript);
+    };
+
+} else {
+    micIcon.style.display = 'none'; // Hide the mic icon if browser doesn't support speech recognition
+    alert('Speech Recognition is not supported in your browser. Please try using Chrome or a supported browser.');
+}
+
+// Function to send the recognized text to /cat_text
+function sendTextForCategorization(transcript) {
+    const formData = new FormData();
+    formData.append('text', transcript);
+
+    fetch('/cat_text', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid data received from the server.');
+        }
+
+        const type = (data.type || '').toString().trim();
+        const subtype = (data.subtype || '').toString().trim();
+        const details = data.details || '';
+
+        if (type === '0') {
+            alert('No context found, please enter details manually.');
+        } else {
+            const typeField = document.getElementById('type');
+            const subTypeField = document.getElementById('subType');
+            const messageField = document.getElementById('message');
+
+            // Set the type value and trigger the change event
+            let typeMatched = false;
+            [...typeField.options].forEach(option => {
+                if (option.textContent.trim() === type) {
+                    typeField.value = option.value;
+                    typeMatched = true;
+                }
+            });
+
+            if (!typeMatched) {
+                console.warn('Type value not found:', type);
+                return;
+            }
+
+            // Trigger the change event to load the corresponding subtypes
+            const event = new Event('change');
+            typeField.dispatchEvent(event);
+
+            // Wait until the subtype dropdown is populated before setting the value
+            setTimeout(function() {
+                let subTypeMatched = false;
+                [...subTypeField.options].forEach(option => {
+                    if (option.textContent.trim() === subtype) {
+                        subTypeField.value = option.value;
+                        subTypeMatched = true;
+                    }
+                });
+
+                if (!subTypeMatched) {
+                    console.warn('Subtype value not found:', subtype);
+                }
+
+                // Set the details field
+                messageField.value = details;
+
+            }, 500); // Adjust the delay as needed to ensure subtypes are loaded
+        }
+    })
+    .catch(error => {
+        console.error('Error categorizing the text:', error);
+        alert('Error categorizing the text.');
+    });
+}
+
+        document.getElementById('categorizeTextBtn').addEventListener('click', function() {
+            const transcript = document.getElementById('message').value;
+            sendTextForCategorization(transcript);
+        });

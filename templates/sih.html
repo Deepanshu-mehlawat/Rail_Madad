@@ -6,21 +6,44 @@
     <title>Rail Madad - Complaint Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sih.css') }}">
     <style>
-        .mic-icon {
+                .mic-icon {
             cursor: pointer;
             display: inline-block;
             background: url('{{ url_for('static', filename='images/passive.png') }}') no-repeat center;
             background-size: contain;
             width: 24px;
             height: 24px;
-            margin-left: 10px;
         }
 
         .mic-active {
             background: url('{{ url_for('static', filename='images/mic.png') }}') no-repeat center;
             background-size: contain;
         }
-    </style>
+
+        /* Flexbox container for the text area and mic icon/button */
+        .details-container {
+            display: flex;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        #message {
+            flex: 0 0 80%; /* 80% of the space */
+            margin-right: 10px;
+        }
+
+        .mic-and-categorize {
+    flex: 0 0 20%; /* 20% of the space */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center horizontally */
+    justify-content: center; /* Center vertically */
+}
+
+        #categorizeTextBtn {
+            margin-top: 10px;
+        }
+</style>
 </head>
 <body>
     <header>
@@ -50,20 +73,20 @@
                 <label for="pnr">PNR Number:</label>
                 <input type="text" id="pnr" required>
 
-                <label for="incidentDate">Incident Date:</label>
-                <input type="date" id="incidentDate" required>
+		<label for="incidentDateTime">Incident Date and Time:</label>
+		<input type="datetime-local" id="incidentDateTime" required>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="type">Type:</label>
                         <select id="type" required>
-                            <option value="">Select Type</option>
+                            <option value="select">Select Type</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="subType">Sub Type:</label>
                         <select id="subType" required>
-                            <option value="">Select Sub Type</option>
+                            <option value="select">Select Sub Type</option>
                         </select>
                     </div>
                 </div>
@@ -71,13 +94,17 @@
                 <label for="message">Details:</label>
                 <div class="details-container">
                     <textarea id="message" required></textarea>
-                    <span class="mic-icon" id="micIcon" title="Click to start speech recognition"></span>
+                    <div class="mic-and-categorize">
+                        <span class="mic-icon" id="micIcon" title="Click to start speech recognition"></span>
+                        <button type="button" id="categorizeTextBtn">Submit</button>
+                    </div>
                 </div>
 
 
                 <div class="form-group">
                     <label for="imageUpload">Upload Image:</label>
                     <input type="file" id="imageUpload" name="imageUpload" accept="image/*">
+                    <button type="button" id="categorizeBtn">Categorize</button>
                     <div id="imagePreview"></div>
                 </div>
 
@@ -91,46 +118,6 @@
             <p>&copy; 2024 Rail Madad - All rights reserved.</p>
         </div>
     </footer>
-    <script>
-        const micIcon = document.getElementById('micIcon');
-        const messageTextarea = document.getElementById('message');
-
-        // Check if the browser supports Web Speech API
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            micIcon.addEventListener('click', () => {
-                if (micIcon.classList.contains('mic-active')) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            });
-
-            recognition.onstart = function () {
-                micIcon.classList.add('mic-active');
-                micIcon.title = 'Listening... Click to stop';
-            };
-
-            recognition.onend = function () {
-                micIcon.classList.remove('mic-active');
-                micIcon.title = 'Click to start speech recognition';
-            };
-
-            recognition.onresult = function (event) {
-                const transcript = event.results[0][0].transcript;
-                messageTextarea.value += transcript;
-            };
-
-        } else {
-            micIcon.style.display = 'none'; // Hide the mic icon if browser doesn't support speech recognition
-            alert('Speech Recognition is not supported in your browser. Please try using Chrome or a supported browser.');
-        }
-    </script>
     <script src="{{ url_for('static', filename='js/sih.js') }}"></script>
 </body>
 </html>
