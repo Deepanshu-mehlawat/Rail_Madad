@@ -185,6 +185,30 @@ footer {
     width: 100%;
 }
 
+.details-container {
+    display: flex;
+    align-items: center; /* This will vertically center the mic icon */
+    margin-bottom: 1rem;
+}
+
+.details-container textarea {
+    flex-grow: 1;
+    margin-right: 10px;
+    resize: vertical; /* Allows vertical resizing only */
+}
+
+.details-container .mic-icon {
+    flex-shrink: 0;
+}
+
+.form-group.image-upload {
+    text-align: center; /* This will center the image upload option */
+}
+
+.form-group.image-upload input[type="file"] {
+    display: inline-block;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     header .container {
