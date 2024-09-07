@@ -9,7 +9,7 @@
 <body>
     <header>
         <div class="container">
-            <h1>Rail Madad</h1>
+            <h1>RailMadad</h1>
             <nav>
                 <ul>
                     <li><a href="#home">Home</a></li>
@@ -21,26 +21,45 @@
         </div>
     </header>
 
-
     <section id="complaints">
         <div class="container">
             <h3>Complaint Form</h3>
-            <form id="complaintForm">
+            <form id="complaintForm" enctype="multipart/form-data">
                 <label for="name">Your Name:</label>
                 <input type="text" id="name" required>
 
                 <label for="email">Email:</label>
                 <input type="email" id="email" required>
 
-                <label for="category">Complaint Category:</label>
-                <select id="category">
-                    <option value="cleanliness">Cleanliness</option>
-                    <option value="staff_behavior">Staff Behavior</option>
-                    <option value="damage">Damage</option>
-                </select>
+                <label for="pnr">PNR Number:</label>
+                <input type="text" id="pnr" required>
+
+                <label for="incidentDate">Incident Date:</label>
+                <input type="date" id="incidentDate" required>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="type">Type:</label>
+                        <select id="type" required>
+                            <option value="">Select Type</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="subType">Sub Type:</label>
+                        <select id="subType" required>
+                            <option value="">Select Sub Type</option>
+                        </select>
+                    </div>
+                </div>
 
                 <label for="message">Details:</label>
                 <textarea id="message" required></textarea>
+
+                <div class="form-group">
+                    <label for="imageUpload">Upload Image:</label>
+                    <input type="file" id="imageUpload" name="imageUpload" accept="image/*">
+                    <div id="imagePreview"></div>
+                </div>
 
                 <button type="submit">Submit</button>
             </form>
@@ -53,6 +72,6 @@
         </div>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sih.js') }}"></script>
 </body>
 </html>
