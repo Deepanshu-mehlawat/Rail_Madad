@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rail Madad - Complaint Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sih.css') }}">
+    <style>
+        .mic-icon {
+            cursor: pointer;
+            display: inline-block;
+            background: url('{{ url_for('static', filename='images/passive.png') }}') no-repeat center;
+            background-size: contain;
+            width: 24px;
+            height: 24px;
+            margin-left: 10px;
+        }
+
+        .mic-active {
+            background: url('{{ url_for('static', filename='images/mic.png') }}') no-repeat center;
+            background-size: contain;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -53,7 +69,11 @@
                 </div>
 
                 <label for="message">Details:</label>
-                <textarea id="message" required></textarea>
+                <div class="details-container">
+                    <textarea id="message" required></textarea>
+                    <span class="mic-icon" id="micIcon" title="Click to start speech recognition"></span>
+                </div>
+
 
                 <div class="form-group">
                     <label for="imageUpload">Upload Image:</label>
@@ -71,7 +91,46 @@
             <p>&copy; 2024 Rail Madad - All rights reserved.</p>
         </div>
     </footer>
+    <script>
+        const micIcon = document.getElementById('micIcon');
+        const messageTextarea = document.getElementById('message');
 
+        // Check if the browser supports Web Speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            micIcon.addEventListener('click', () => {
+                if (micIcon.classList.contains('mic-active')) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+
+            recognition.onstart = function () {
+                micIcon.classList.add('mic-active');
+                micIcon.title = 'Listening... Click to stop';
+            };
+
+            recognition.onend = function () {
+                micIcon.classList.remove('mic-active');
+                micIcon.title = 'Click to start speech recognition';
+            };
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript;
+                messageTextarea.value += transcript;
+            };
+
+        } else {
+            micIcon.style.display = 'none'; // Hide the mic icon if browser doesn't support speech recognition
+            alert('Speech Recognition is not supported in your browser. Please try using Chrome or a supported browser.');
+        }
+    </script>
     <script src="{{ url_for('static', filename='js/sih.js') }}"></script>
 </body>
 </html>
