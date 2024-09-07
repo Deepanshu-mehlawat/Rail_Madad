@@ -6,7 +6,24 @@
     <title>Rail Madad - Complaint Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sih.css') }}">
     <style>
-                .mic-icon {
+        /* Existing Styles for Mic Icon and Form */
+        .logo {
+            display: inline-block;
+            vertical-align: middle;
+            width: 50px; /* Adjust size as needed */
+            height: 50px; /* Adjust size as needed */
+            margin-right: 10px;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0; /* Ensure there's no extra margin */
+        }
+        .logo-container h1 {
+            margin: 0;
+            line-height: 1; /* Adjust line height to reduce space */
+        }
+        .mic-icon {
             cursor: pointer;
             display: inline-block;
             background: url('{{ url_for('static', filename='images/passive.png') }}') no-repeat center;
@@ -20,7 +37,6 @@
             background-size: contain;
         }
 
-        /* Flexbox container for the text area and mic icon/button */
         .details-container {
             display: flex;
             align-items: flex-start;
@@ -33,28 +49,41 @@
         }
 
         .mic-and-categorize {
-    flex: 0 0 20%; /* 20% of the space */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center horizontally */
-    justify-content: center; /* Center vertically */
-}
+            flex: 0 0 20%; /* 20% of the space */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center horizontally */
+            justify-content: center; /* Center vertically */
+        }
 
         #categorizeTextBtn {
             margin-top: 10px;
         }
-</style>
+
+        /* New Styles to reduce space */
+        header {
+            margin-bottom: 45px; /* Reduce space below header */
+        }
+
+        section#complaints {
+            padding-top: 0; /* Remove padding at the top */
+            margin-top: -20px; /* Negative margin to further reduce space */
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>RailMadad</h1>
+            <div class="logo-container">
+                <img src="{{ url_for('static',filename='images/unnamed.png') }}" alt="Indian Railways Logo" class="logo">
+                <h1>Rail Madad</h1>
+            </div>
             <nav>
                 <ul>
                     <li><a href="#home">Home</a></li>
-                    <li><a href="#complaints">File Complaint</a></li>
+                    <li><a href="#complaints">Dashboard</a></li>
                     <li><a href="#about">About Us</a></li>
-                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="#contact">Log out</a></li>
                 </ul>
             </nav>
         </div>
@@ -73,8 +102,8 @@
                 <label for="pnr">PNR Number:</label>
                 <input type="text" id="pnr" required>
 
-		<label for="incidentDateTime">Incident Date and Time:</label>
-		<input type="datetime-local" id="incidentDateTime" required>
+                <label for="incidentDateTime">Incident Date and Time:</label>
+                <input type="datetime-local" id="incidentDateTime" required>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -99,7 +128,6 @@
                         <button type="button" id="categorizeTextBtn">Submit</button>
                     </div>
                 </div>
-
 
                 <div class="form-group">
                     <label for="imageUpload">Upload Image:</label>
