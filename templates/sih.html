@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rail Madad - Complaint Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sih.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Rail Madad</h1>
+            <nav>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#complaints">File Complaint</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="hero">
+        <div class="hero-content">
+            <h2>Report Your Issue with Ease</h2>
+            <p>Seamlessly file and track your rail complaints online.</p>
+            <button id="complaintButton">File a Complaint</button>
+        </div>
+    </section>
+
+    <section id="complaints">
+        <div class="container">
+            <h3>Complaint Form</h3>
+            <form id="complaintForm">
+                <label for="name">Your Name:</label>
+                <input type="text" id="name" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+
+                <label for="category">Complaint Category:</label>
+                <select id="category">
+                    <option value="cleanliness">Cleanliness</option>
+                    <option value="staff_behavior">Staff Behavior</option>
+                    <option value="damage">Damage</option>
+                </select>
+
+                <label for="message">Details:</label>
+                <textarea id="message" required></textarea>
+
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Rail Madad - All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
