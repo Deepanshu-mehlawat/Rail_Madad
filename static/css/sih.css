@@ -20,8 +20,8 @@ body::before {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 50%;
+    height: 80%;
     background: inherit;
     filter: blur(8px);
     z-index: -1;
@@ -33,30 +33,10 @@ body::before {
     overflow: hidden;
 }
 
-.log {
-    width: 30%;
-    padding: 2rem;
-    background-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    text-align: center;
-    margin: auto;
-}
-
-.par{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
-}
-
 header {
     background-color: rgba(0, 71, 133, 0.9);
-    color: #fff;
-    padding: 1rem 0;
-    position: fixed;
+    color: #ffffff;
+    padding: 1.5rem 0;
     width: 100%;
     top: 0;
     z-index: 1000;
@@ -70,7 +50,7 @@ header .container {
 
 header h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 2.5rem;
 }
 
 nav ul {
@@ -90,47 +70,64 @@ nav ul li a {
 }
 
 nav ul li a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(57, 113, 224, 0.832);
     border-radius: 5px;
 }
-
-main {
-    padding-top: 60px; /* To account for fixed header */
-}
-
-#hero {
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    text-align: center;
-    padding: 100px 0;
-}
-
-#hero h2 {
-    font-size: 2.5rem;
+.form-group {
     margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-#hero p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+#imageUpload {
+    margin-bottom: 0.5rem;
 }
 
+#imagePreview {
+    max-width: 100%;
+    margin-top: 0.5rem;
+}
+
+#imagePreview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+}
 
 #complaints {
     background-color: rgba(255, 255, 255, 0.9);
     padding: 3rem 0;
     margin: 10% 20%;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 #complaints .container {
-    max-width: 500px;
+    max-width: 550px;
 }
 
 #complaints h3 {
     text-align: center;
-    margin-bottom: 2rem;
-    color: #004785;
+    margin-bottom: 1.2rem;
+    color: #0b508d;
+    font-size: 2.5rem;
+}
+
+form .form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+form .form-group {
+    flex: 1;
+}
+
+form .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+form .form-group select {
+    width: 100%;
 }
 
 form {
@@ -141,6 +138,7 @@ form {
 form label {
     margin-bottom: 0.5rem;
     color: #004785;
+    font-weight: bold;
 }
 
 form input,
@@ -153,12 +151,17 @@ form textarea {
     font-size: 1rem;
 }
 
+form input[type="date"] {
+    font-family: Arial, sans-serif;
+}
+
 form textarea {
     height: 150px;
+    resize: vertical;
 }
 
 form button {
-    background-color: #065baf;
+    background-color: rgba(0, 71, 133, 0.9);
     color: white;
     border: none;
     padding: 0.75rem;
@@ -196,11 +199,20 @@ footer {
         margin: 0 0.5rem;
     }
 
-    #hero h2 {
-        font-size: 2rem;
+    #complaints {
+        margin: 20% 5%;
     }
 
     #complaints .container {
-        width: 90%;
+        width: 95%;
+    }
+
+    form .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    form .form-group {
+        margin-bottom: 1rem;
     }
 }
