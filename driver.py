@@ -232,7 +232,7 @@ def dashboard():
         user_requests = list(complaints_collection.find({'user_id': user_id}))
         
         # Pass the requests to the template
-        return render_template('dashboard.html', user_requests=user_requests)
+        return render_template('dashboard.html', user_requests=user_requests, here = {1:"approved",2:"disapproved",0:"pending"})
     except Exception as e:
         print(f'Error loading user requests: {e}')
         return jsonify({'success': False, 'error': str(e)})
