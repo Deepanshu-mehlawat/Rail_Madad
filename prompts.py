@@ -1,6 +1,8 @@
 import json
 with open('categories.json', 'r') as file:
     data = json.load(file)
+with open('department.json', 'r') as file:
+    dept = json.load(file)
 
 prompt1 = f'''We are making a webapp that allows users to lodge complaints regarding
 their train travels easily and quickly. We want people to upload a photo and
@@ -50,3 +52,20 @@ If not confident:
 Strictly adhere to this output format, no code block, no nothing, just the JSON response in the format I just gave you.
 here is the text :
 '''
+
+prompt3=f'''We are making a webapp that allows users to lodge complaints regarding
+their train travels easily and quickly. people are giving us problem details, problem types and other details, we want to access their severity and assign a department to the complaint
+Here are all the problem types and their respective departments: {dept}
+You need to analyze their issue type and predict the severity and department for the problem type.
+severity can be either low, mwdium or high
+
+Here is the format of the output:
+{{
+"severity":"high",
+"department":"Security"
+}}
+
+Strictly adhere to this output format, no code block, no nothing, just the JSON response in the format I just gave you.
+here is the data :
+'''
+

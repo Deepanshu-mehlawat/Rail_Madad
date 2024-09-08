@@ -80,9 +80,9 @@ section h3 {
 }
 
 table {
-    width: 100%;
+    width: 80%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin: 0 auto;
 }
 
 table th, table td {
@@ -92,40 +92,59 @@ table th, table td {
     word-wrap: break-word;
 }
 
-table th {
-    background-color: #f4f4f4;
+/* Remove forced equal width */
+table th, table td {
+    width: auto; /* Allow the columns to size dynamically */
 }
 
+/* Specifically set a larger width for the action column to fit the buttons */
+table td:last-child, table th:last-child {
+    width: 150px; /* Adjust width to fit buttons */
+}
+
+/* Button styling */
 .approve-btn, .disqualify-btn {
     padding: 5px 10px;
     border: none;
     cursor: pointer;
-    height: 45px;
-    width: 45px;
+    height: auto; /* Let height adjust automatically */
+    width: auto;  /* Let width adjust automatically */
     justify-content: center;
+    white-space: nowrap; /* Prevent button text from wrapping */
 }
 
 .approve-btn {
-    background-color: white; 
-    color: #4CAF50; 
-    border: 2px solid #4CAF50; 
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px; 
-    margin-right: 10px; 
-}
-
-.disqualify-btn {
-    background-color: white; /* White background */
-    color: #f44336; /* Red text for the cross */
-    border: 2px solid #f44336; /* Red border */
+    background-color: white;
+    color: #4CAF50;
+    border: 2px solid #4CAF50;
     cursor: pointer;
     border-radius: 5px;
     font-size: 16px;
     margin-right: 10px;
-
 }
 
+.disqualify-btn {
+    background-color: white;
+    color: #f44336;
+    border: 2px solid #f44336;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+/* Ensure responsiveness */
+@media (max-width: 768px) {
+    /* Responsive adjustments */
+    table th, table td {
+        width: auto; /* Let columns auto adjust on smaller screens */
+    }
+
+    .approve-btn, .disqualify-btn {
+        width: 100%; /* Buttons fill available space on smaller screens */
+        padding: 10px;
+    }
+}
 #complaints {
     background-color: rgba(255, 255, 255, 0.9);
     padding: 3rem 0;
@@ -142,7 +161,6 @@ table th {
     margin-bottom: 2rem;
     color: #004785;
 }
-
 
 footer {
     background-color: rgba(0, 71, 133, 0.9);
@@ -174,5 +192,10 @@ footer {
 
     #complaints .container {
         width: 90%;
+    }
+
+    /* Adjust table column widths for smaller screens */
+    table th, table td {
+        width: auto;
     }
 }

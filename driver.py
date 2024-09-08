@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 import pymongo
+import uuid
 import json
 from pymongo import MongoClient
 import prompts
@@ -17,15 +18,20 @@ bcrypt = Bcrypt(app)
 load_dotenv()
 api_key = os.getenv('API_KEY')
 genai.configure(api_key=api_key)
+app.secret_key = os.urandom(24) 
 
 # Create a new client and connect to the server
 client = MongoClient(uri)
 db = client['SIH']
 users_collection = db['Users']
+complaints_collection = db['Complaints']
 
 @app.route('/')
 def home():
+    if 'user_id' in session:
+        return redirect('/sih')
     return redirect('/login')
+
 
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
@@ -36,10 +42,22 @@ def login():
         user = users_collection.find_one({'email': email})
 
         if user and bcrypt.check_password_hash(user['password'], password):
-            return redirect('/sih')
+            session['user_id'] = str(user['_id'])  # Storing user_id in session
+            session['username'] = user['username']
+            if user.get('type') == 1:
+                return redirect('/admin_login')  # Redirect to admin login page
+            else:
+                return redirect('/sih')  # Redirect to 'sih' page
         else:
             return render_template('login.html', message='Username or password incorrect')
     return render_template('login.html', message='Login to Continue')
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Clear session data
+    session.pop('username', None)
+    return redirect('/login')
 
 # Register route
 @app.route('/register', methods=['GET', 'POST'])
@@ -62,8 +80,9 @@ def register():
 # SIH route (Protected)
 @app.route('/sih')
 def sih():
-    # Add logic for authenticated users
-    return render_template('sih.html')
+    if 'user_id' not in session:
+        return redirect('/login')
+    return render_template('sih.html', username=session.get('username'))
 
 @app.route('/cat_img', methods=['POST'])
 def cat_img():
@@ -114,6 +133,109 @@ def cat_text():
     
     # Return the parsed JSON response
     return jsonify(response_json)
+
+@app.route('/admin_login')
+def admin_login():
+    if not session.get('user_id'):
+        return redirect('/login')
+    try:
+        # Retrieve complaints from MongoDB
+        pending_complaints = list(complaints_collection.find({'status': 0}))  # Status 0: Pending Approval
+        active_complaints = list(complaints_collection.find({'status': 1}))   # Status 1: Active Complaints
+
+        # Pass the complaints to the template
+        return render_template('admin_page.html', 
+                               pending_complaints=pending_complaints, 
+                               active_complaints=active_complaints)
+    except Exception as e:
+        print(f'Error loading complaints: {e}')
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/add_complaint', methods=['POST'])
+def add_complaint():
+    try:
+        data = request.json
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'User not logged in'})
+        
+        # Generate a unique complaint ID
+        complaint_id = str(uuid.uuid4())
+        
+        # Prepare the data
+        complaint_data = {
+            'complaint_id': complaint_id,
+            'user_id': user_id,
+            'name': data.get('name'),
+            'email': data.get('email'),
+            'pnr': data.get('pnr'),
+            'incident_date_time': data.get('incidentDateTime'),
+            'type': data.get('type'),
+            'sub_type': data.get('subType'),
+            'message': data.get('message'),
+            'severity': 'Uncategorized'  # Default value before categorization
+        }
+        
+        # Call Gemini API to categorize and get severity
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompts.prompt3 + 'Type: ' + data.get('type') + " details:" + data.get('message'))
+        print(response.text)
+        # Extract severity from the response
+        response_json = json.loads(response.text)
+        severity = response_json.get('severity', 'Uncategorized')
+        department = response_json.get('department', 'Uncategorized')
+        
+        # Update severity in the complaint data
+        complaint_data['severity'] = severity
+        complaint_data['department'] = department
+        complaint_data['status']=0
+        
+        
+        # Save to MongoDB
+        complaints_collection.insert_one(complaint_data)
+        
+        return jsonify({'success': True, 'complaint_id': complaint_id})
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/status', methods=['POST'])
+def status():
+    try:
+        data = request.get_json()
+        complaint_id = data.get('complaint_id')
+        new_status = data.get('status')  # 1 for approve, 2 for disapprove
+        
+        if not complaint_id or new_status not in [1, 2]:
+            return jsonify({'success': False, 'message': 'Invalid data'}), 400
+        
+        # Update the status in the database
+        result = complaints_collection.update_one(
+            {'complaint_id': complaint_id},
+            {'$set': {'status': new_status}}
+        )
+        
+        if result.modified_count == 1:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Complaint not found or no update made'}), 404
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/dashboard')
+def dashboard():
+    try:
+        # Retrieve the user's requests from MongoDB
+        user_id = session['user_id']  # Define this function based on your authentication method
+        print(user_id)
+        user_requests = list(complaints_collection.find({'user_id': user_id}))
+        
+        # Pass the requests to the template
+        return render_template('dashboard.html', user_requests=user_requests)
+    except Exception as e:
+        print(f'Error loading user requests: {e}')
+        return jsonify({'success': False, 'error': str(e)})
 
 
 if __name__ == '__main__':

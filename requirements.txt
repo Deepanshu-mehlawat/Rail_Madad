@@ -1,6 +1,6 @@
 python-dotenv
 google-generativeai
-flask
+Flask
+flask-bcrypt
 pymongo
-Flask-Bcrypt
-Flask-PyMongo
+Pillow

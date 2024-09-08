@@ -309,3 +309,52 @@ function sendTextForCategorization(transcript) {
             const transcript = document.getElementById('message').value;
             sendTextForCategorization(transcript);
         });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('complaintForm');
+    form.addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+        const formData = new FormData(form);
+
+        // Debugging: Log form values
+        console.log("Form Data:", {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            pnr: formData.get('pnr'),
+            incidentDateTime: formData.get('incidentDateTime'),
+            type: formData.get('type'),
+            subType: formData.get('subType'),
+            message: formData.get('message')
+        });
+
+        // Prepare data for submission
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            pnr: formData.get('pnr'),
+            incidentDateTime: formData.get('incidentDateTime'),
+            type: formData.get('type'),
+            subType: formData.get('subType'),
+            message: formData.get('message'),
+        };
+
+        fetch('/add_complaint', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Complaint submitted successfully!');
+                form.reset(); // Clear form after submission
+            } else {
+                alert('Error submitting complaint.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});

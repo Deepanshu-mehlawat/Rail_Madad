@@ -258,3 +258,70 @@ footer {
     margin: 0; /* Remove default body margin */
     background-color: #f0f0f0; /* Optional: sets a background color */
 }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    word-wrap: break-word;
+}
+
+/* Remove forced equal width */
+table th, table td {
+    width: auto; /* Allow the columns to size dynamically */
+}
+
+/* Specifically set a larger width for the action column to fit the buttons */
+table td:last-child, table th:last-child {
+    width: 150px; /* Adjust width to fit buttons */
+}
+
+/* Button styling */
+.approve-btn, .disqualify-btn {
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    height: auto; /* Let height adjust automatically */
+    width: auto;  /* Let width adjust automatically */
+    justify-content: center;
+    white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+.approve-btn {
+    background-color: white;
+    color: #4CAF50;
+    border: 2px solid #4CAF50;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.disqualify-btn {
+    background-color: white;
+    color: #f44336;
+    border: 2px solid #f44336;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+/* Ensure responsiveness */
+@media (max-width: 768px) {
+    /* Responsive adjustments */
+    table th, table td {
+        width: auto; /* Let columns auto adjust on smaller screens */
+    }
+
+    .approve-btn, .disqualify-btn {
+        width: 100%; /* Buttons fill available space on smaller screens */
+        padding: 10px;
+    }
+}
