@@ -65,7 +65,7 @@
                         <td>{{ request.message }}</td>
                         <td>{{ request.severity }}</td>
                         <td>{{ request.department }}</td>
-                        <td>{{ request.status }}</td>
+                        <td>{{ here[request.status] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
