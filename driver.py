@@ -138,15 +138,31 @@ def cat_text():
 def admin_login():
     if not session.get('user_id'):
         return redirect('/login')
-    try:
-        # Retrieve complaints from MongoDB
-        pending_complaints = list(complaints_collection.find({'status': 0}))  # Status 0: Pending Approval
-        active_complaints = list(complaints_collection.find({'status': 1}))   # Status 1: Active Complaints
 
-        # Pass the complaints to the template
+    try:
+        # Define severity mapping for sorting (High -> 1, Medium -> 2, Low -> 3)
+        severity_order = {'high': 1, 'medium': 2, 'low': 3}
+
+        # Retrieve and sort pending complaints (status = 0) by severity
+        pending_complaints = list(
+            complaints_collection.find({'status': 0}).sort(
+                [("severity", 1)]  # Sort by severity, lower is prioritized
+            )
+        )
+
+        # Retrieve and sort active complaints (status = 1) by severity
+        active_complaints = list(
+            complaints_collection.find({'status': 1}).sort(
+                [("severity", 1)]  # Sort by severity, lower is prioritized
+            )
+        )
+
+        # Pass the complaints and status options to the template
         return render_template('admin_page.html', 
                                pending_complaints=pending_complaints, 
-                               active_complaints=active_complaints)
+                               active_complaints=active_complaints,
+                               here={1: "approved", 2: "disapproved", 0: "pending"})
+
     except Exception as e:
         print(f'Error loading complaints: {e}')
         return jsonify({'success': False, 'error': str(e)})
@@ -227,15 +243,62 @@ def status():
 def dashboard():
     try:
         # Retrieve the user's requests from MongoDB
-        user_id = session['user_id']  # Define this function based on your authentication method
-        print(user_id)
-        user_requests = list(complaints_collection.find({'user_id': user_id}))
+        user_id = session['user_id']  # Define this based on your authentication method
+        
+        # Define severity mapping for sorting (High -> 1, Medium -> 2, Low -> 3)
+        severity_order = {'high': 1, 'medium': 2, 'low': 3}
+
+        # Retrieve and sort user requests by severity
+        user_requests = list(
+            complaints_collection.find({'user_id': user_id}).sort(
+                [("severity", 1)]  # Sort by severity, lower values (1 = high) come first
+            )
+        )
         
         # Pass the requests to the template
-        return render_template('dashboard.html', user_requests=user_requests, here = {1:"approved",2:"disapproved",0:"pending"})
+        return render_template('dashboard.html', 
+                               user_requests=user_requests, 
+                               here={1: "approved", 2: "disapproved", 0: "pending"})
     except Exception as e:
         print(f'Error loading user requests: {e}')
         return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/save_changes', methods=['POST'])
+def save_changes():
+    try:
+        data = request.json
+        complaint_id = data['complaint_id']
+        
+        # Debugging to see the received data
+        print(f"Received data: {data}")
+        print(f"Complaint ID: {complaint_id}")
+
+        # Perform the update in MongoDB
+        result = complaints_collection.update_one(
+            {'complaint_id': complaint_id},  # Match complaint ID
+            {
+                '$set': {
+                    'type': data['type'],
+                    'severity': data['severity'],
+                    'department': data['department']
+                }
+            }
+        )
+        
+        # Check if the document was actually modified
+        if result.matched_count == 0:
+            print(f"No document found with complaint_id: {complaint_id}")
+            return jsonify({'success': False, 'message': 'No matching document found'})
+        else:
+            print(f"Document updated for complaint_id: {complaint_id}")
+            return jsonify({'success': True})
+
+    except Exception as e:
+        print(f"Error while saving changes: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+
 
 
 if __name__ == '__main__':

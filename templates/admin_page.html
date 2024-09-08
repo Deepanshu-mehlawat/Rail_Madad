@@ -37,7 +37,7 @@
                     <li><a href="#home">Home</a></li>
                     <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
                     <li><a href="#about">About Us</a></li>
-                    <li><a href="{{ url_for('logouts') }}">Log out</a></li>
+                    <li><a href="{{ url_for('logout') }}">Log out</a></li>
                 </ul>
             </nav>
         </div>
@@ -58,20 +58,21 @@
                     </tr>
                 </thead>
                 <tbody id="pendingTable">
-                    {% for complaint in pending_complaints %}
-                    <tr id="pending-{{ complaint.complaint_id }}">
-                        <td>{{ complaint.complaint_id }}</td>
-                        <td>{{ complaint.type }}</td>
-                        <td>{{ complaint.message }}</td>
-                        <td>{{ complaint.severity }}</td>
-                        <td>{{ complaint.department }}</td>
-                        <td>
-                            <button class="approve-btn" type="button" onclick="updateStatus('{{ complaint.complaint_id }}', 1)">✔</button>
-                            <button class="disqualify-btn" type="button" onclick="updateStatus('{{ complaint.complaint_id }}', 2)">❌</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                {% for complaint in pending_complaints %}
+                <tr id="pending-{{ complaint.complaint_id }}">
+                    <td>{{ complaint.complaint_id }}</td>
+                    <td contenteditable="true">{{ complaint.type }}</td>
+                    <td>{{ complaint.message }}</td> <!-- Non-editable field -->
+                    <td contenteditable="true">{{ complaint.severity }}</td>
+                    <td contenteditable="true">{{ complaint.department }}</td>
+                    <td>
+                        <!-- Approve/Disqualify buttons now also call saveChanges -->
+                        <button class="approve-btn" type="button" onclick="saveChanges('{{ complaint.complaint_id }}'); updateStatus('{{ complaint.complaint_id }}', 1)">✔</button>
+                        <button class="disqualify-btn" type="button" onclick="saveChanges('{{ complaint.complaint_id }}'); updateStatus('{{ complaint.complaint_id }}', 2)">❌</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
             </table>
 
             <h3>Active Complaints</h3>
@@ -94,7 +95,7 @@
                         <td>{{ complaint.message }}</td>
                         <td>{{ complaint.severity }}</td>
                         <td>{{ complaint.department }}</td>
-                        <td>{{ complaint.status }}</td>
+                        <td>{{ here[complaint.status] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -142,6 +143,43 @@
                 console.error('Error:', error);
             });
         }
+function saveChanges(complaintId) {
+    // Find the row that matches the complaintId
+    const row = document.getElementById('pending-' + complaintId);
+
+    // Get the updated values from the editable cells (type, severity, department)
+    const updatedType = row.cells[1].innerText;
+    const updatedSeverity = row.cells[3].innerText;
+    const updatedDepartment = row.cells[4].innerText;
+
+    // Prepare the data to send
+    const updatedData = {
+        complaint_id: complaintId,
+        type: updatedType,
+        severity: updatedSeverity,
+        department: updatedDepartment
+    };
+
+    // Send the updated data to the backend via fetch
+    fetch('/save_changes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Changes saved successfully for complaint ID:', complaintId);
+        } else {
+            alert('Failed to save changes for complaint ID: ' + complaintId);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving changes:', error);
+    });
+}
     </script>
 </body>
 </html>
