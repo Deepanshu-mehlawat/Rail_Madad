@@ -8,6 +8,8 @@ from pymongo import MongoClient
 import prompts
 import os
 from PIL import Image
+import re
+import io
 #from IPython.display import Image
 #from IPython.core.display import HTML
 import google.generativeai as genai
@@ -84,56 +86,110 @@ def sih():
         return redirect('/login')
     return render_template('sih.html', username=session.get('username'))
 
+def clean_and_parse_json(response_text):
+    fence_pattern = r'```(?:json)?\s*({.*?})\s*```'
+    match = re.search(fence_pattern, response_text, re.DOTALL | re.IGNORECASE)
+
+    json_str = None
+    if match:
+        json_str = match.group(1)
+    else:
+        start_index = response_text.find('{')
+        end_index = response_text.rfind('}')
+
+        if start_index != -1 and end_index != -1 and end_index > start_index:
+            json_str = response_text[start_index : end_index + 1]
+        else:
+            # If no '{' or '}' found, or in wrong order, assume the whole text MIGHT be JSON
+            # This is a fallback and might fail if there's surrounding text
+            json_str = response_text.strip()
+
+    if not json_str:
+        print("Error: Could not extract a potential JSON string.")
+        return None
+
+    try:
+        # Attempt to parse the extracted string
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}")
+        # Include the string we *tried* to parse for better debugging
+        print(f"--- Original text was ---\n{response_text}\n---")
+        print(f"--- Attempted parsing ---\n{json_str}\n---")
+        return None # Indicate failure clearly
+
+
 @app.route('/cat_img', methods=['POST'])
 def cat_img():
     if 'image' not in request.files:
-        return jsonify({"type": "0"})  # No image received
-    
+        flash('No image file received.')
+        return jsonify({"type": "0", "error": "No image file received."})
+
     image_file = request.files['image']
-    
+    if image_file.filename == '':
+        flash('No image selected.')
+        return jsonify({"type": "0", "error": "No image selected."})
+
     try:
-        image = Image.open(image_file)  # Open the uploaded image
-    except IOError:
-        return jsonify({"type": "0"})
+        # It's safer to read bytes and let GenAI handle it, or ensure valid image with PIL
+        image_bytes = image_file.read()
+        image = Image.open(io.BytesIO(image_bytes)) # Validate it's an image
+    except Exception as e: # Catch broader exceptions during image processing
+        print(f"Error processing image file: {e}")
+        return jsonify({"type": "0", "error": f"Invalid image file: {e}"})
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content([prompts.prompt1, image])
-
-    # Print response.text to debug
-    print('Response text from model:', response.text)
-    
     try:
-        # Attempt to parse the response as JSON
-        response_json = json.loads(response.text)
-    except json.JSONDecodeError:
-        # If parsing fails, return a default error response
-        return jsonify({"type": "0"})
-    
-    # Return the parsed JSON response
-    return jsonify(response_json)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        # Pass PIL image object directly
+        response = model.generate_content([prompts.prompt1, image])
 
-@app.route('/cat_text',methods=['POST'])
+        # Use the helper function to parse
+        parsed_data = clean_and_parse_json(response.text)
+
+        if parsed_data is None:
+             # Parsing failed, return default error response
+             print("JSON parsing failed in cat_img.")
+             return jsonify({"type": "0", "error": "Failed to parse AI response"})
+
+        # Return the parsed JSON response
+        return jsonify(parsed_data)
+
+    except Exception as e:
+        print(f"Error during Gemini API call or processing in cat_img: {e}")
+        # Provide a more informative error if possible
+        return jsonify({"type": "0", "error": f"API or processing error: {str(e)}"})
+
+
+@app.route('/cat_text', methods=['POST'])
 def cat_text():
-    if 'text' not in request.form:
-        return jsonify({"type": "0"})
+    if 'text' not in request.form or not request.form['text'].strip():
+        return jsonify({"type": "0", "error": "No text received or text is empty."})
 
     text = request.form['text']
-    print(text)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(prompts.prompt2+text)
+    print("Received text for categorization:", text) # Log received text
 
-    print('Response text from model:', response.text)
-    
     try:
-        # Attempt to parse the response as JSON
-        response_json = json.loads(response.text)
-    except json.JSONDecodeError:
-        # If parsing fails, return a default error response
-        return jsonify({"type": "0"})
-    
-    # Return the parsed JSON response
-    return jsonify(response_json)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        # Construct the full prompt
+        full_prompt = prompts.prompt2 + "\n\nUser Complaint Text:\n" + text
+        response = model.generate_content(full_prompt)
 
+        # Use the helper function to parse
+        parsed_data = clean_and_parse_json(response.text)
+
+        if parsed_data is None:
+            # Parsing failed, return default error response
+            print("JSON parsing failed in cat_text.")
+            return jsonify({"type": "0", "error": "Failed to parse AI response"})
+
+        # Return the parsed JSON response
+        return jsonify(parsed_data)
+
+    except Exception as e:
+        print(f"Error during Gemini API call or processing in cat_text: {e}")
+        return jsonify({"type": "0", "error": f"API or processing error: {str(e)}"})
+
+    
 @app.route('/admin_login')
 def admin_login():
     if not session.get('user_id'):
@@ -173,12 +229,12 @@ def add_complaint():
         data = request.json
         user_id = session.get('user_id')
         if not user_id:
-            return jsonify({'success': False, 'error': 'User not logged in'})
-        
+            return jsonify({'success': False, 'error': 'User not logged in'}), 401 # Unauthorized
+
         # Generate a unique complaint ID
         complaint_id = str(uuid.uuid4())
-        
-        # Prepare the data
+
+        # Prepare the base data
         complaint_data = {
             'complaint_id': complaint_id,
             'user_id': user_id,
@@ -189,31 +245,52 @@ def add_complaint():
             'type': data.get('type'),
             'sub_type': data.get('subType'),
             'message': data.get('message'),
-            'severity': 'Uncategorized'  # Default value before categorization
+            'severity': 'Pending Analysis', # Default before API call
+            'department': 'Pending Analysis',# Default before API call
+            'status': 0 # Default status: pending
         }
-        
-        # Call Gemini API to categorize and get severity
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompts.prompt3 + 'Type: ' + data.get('type') + " details:" + data.get('message'))
-        print(response.text)
-        # Extract severity from the response
-        response_json = json.loads(response.text)
-        severity = response_json.get('severity', 'Uncategorized')
-        department = response_json.get('department', 'Uncategorized')
-        
-        # Update severity in the complaint data
-        complaint_data['severity'] = severity
-        complaint_data['department'] = department
-        complaint_data['status']=0
-        
-        
+
+        # --- Call Gemini API to get severity and department ---
+        # Ensure type and message are present for the prompt
+        complaint_type = data.get('type', 'N/A')
+        complaint_message = data.get('message', 'No details provided.')
+        prompt_input = f"Type: {complaint_type}\nSubtype: {data.get('subType', 'N/A')}\nDetails: {complaint_message}"
+
+        try:
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompts.prompt3 + "\n" + prompt_input)
+
+            # Use the helper function to parse
+            response_json = clean_and_parse_json(response.text)
+
+            if response_json is None:
+                 # Handle parsing failure - log and use defaults or specific error values
+                 print("JSON parsing failed for severity/department in add_complaint.")
+                 # Keep default 'Pending Analysis' or set specific error status
+                 complaint_data['severity'] = 'Error: Parsing Failed'
+                 complaint_data['department'] = 'Error: Parsing Failed'
+            else:
+                 # Successfully parsed - update values safely using .get()
+                 complaint_data['severity'] = response_json.get('severity', 'Analysis Incomplete')
+                 complaint_data['department'] = response_json.get('department', 'Analysis Incomplete')
+
+        except Exception as e:
+            print(f"Error during Gemini API call for severity/department: {e}")
+            # Handle API call failure - log and use defaults or error status
+            complaint_data['severity'] = 'Error: API Failed'
+            complaint_data['department'] = 'Error: API Failed'
+        # --- End Gemini API call ---
+
+
         # Save to MongoDB
         complaints_collection.insert_one(complaint_data)
-        
+
         return jsonify({'success': True, 'complaint_id': complaint_id})
+
     except Exception as e:
-        print(f'Error: {e}')
-        return jsonify({'success': False, 'error': str(e)})
+        # Catch general errors in the route logic
+        print(f'Error in add_complaint route: {e}')
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/status', methods=['POST'])
 def status():
